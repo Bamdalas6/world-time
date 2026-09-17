@@ -145,15 +145,8 @@ export function App() {
     setIsCompareOpen(true);
   }, [selectedCity, cities]);
 
-  // Top Status Bar time (system time)
-  const statusBarTime = useMemo(() => {
-    const hours = liveNow.getHours().toString().padStart(2, '0');
-    const mins = liveNow.getMinutes().toString().padStart(2, '0');
-    return `${hours}:${mins}`;
-  }, [liveNow]);
-
   return (
-    <IOSContainer currentTimeString={statusBarTime} isDark={isDark}>
+    <IOSContainer isDark={isDark}>
       {/* Dynamic Weather & Atmospheric Gradients / Particles */}
       <WeatherOverlay weather={selectedWeather} isDay={selectedTimeDetails.isDay} />
 

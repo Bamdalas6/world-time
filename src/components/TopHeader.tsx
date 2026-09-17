@@ -18,7 +18,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({
   isDark,
 }) => {
   return (
-    <div className="px-6 pt-2 pb-3 select-none">
+    <div className="px-6 pt-5 pb-3 select-none">
       {/* City Avatar / Story reel */}
       <div className="flex items-center justify-between gap-3 mb-4">
         <div className="flex items-center space-x-2.5 overflow-x-auto no-scrollbar py-1 pr-2">
