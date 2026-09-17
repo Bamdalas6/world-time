@@ -67,7 +67,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-            className={`fixed inset-x-3 sm:inset-x-6 top-14 bottom-10 z-50 max-w-xl mx-auto rounded-[36px] overflow-hidden flex flex-col shadow-2xl border ${
+            className={`fixed inset-x-3 sm:inset-x-6 top-14 bottom-10 z-50 max-w-[410px] mx-auto rounded-[36px] overflow-hidden flex flex-col shadow-2xl border ${
               isDark ? 'bg-zinc-900 text-white border-zinc-800' : 'bg-white text-zinc-900 border-zinc-200'
             }`}
           >

@@ -71,7 +71,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
             drag="y" dragConstraints={{ top: 0 }} dragElastic={0.2}
             onDragEnd={(_, info) => { if (info.offset.y > 100) onClose(); }}
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[92vh] rounded-t-[36px] overflow-hidden flex flex-col shadow-2xl border-t ${isDark ? 'bg-zinc-900/95 text-white border-zinc-700/80 backdrop-blur-xl' : 'bg-[#fafafa]/95 text-zinc-900 border-zinc-200/80 backdrop-blur-xl'}`}
+            className={`fixed inset-x-0 bottom-0 z-50 max-w-[430px] mx-auto max-h-[92vh] rounded-t-[36px] overflow-hidden flex flex-col shadow-2xl border-t ${isDark ? 'bg-zinc-900/95 text-white border-zinc-700/80 backdrop-blur-xl' : 'bg-[#fafafa]/95 text-zinc-900 border-zinc-200/80 backdrop-blur-xl'}`}
           >
             {/* Drag Handle */}
             <div className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing shrink-0">
