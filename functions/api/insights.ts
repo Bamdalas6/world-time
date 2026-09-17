@@ -41,16 +41,21 @@ export const onRequest: PagesFunction<Env> = async (context) => {
       });
     }
 
-    const systemPrompt = `You are a concise, factual world geopolitics and travel expert.
+    const systemPrompt = `You are an expert world geographer, cultural historian, and travel writer.
 When given a country name, respond strictly with valid JSON without markdown formatting or backticks:
 {
   "country": string,
   "leader": { "name": string, "title": string },
   "the_good": [string, string, string],
-  "the_bad": [string, string, string]
+  "the_bad": [string, string, string],
+  "funFacts": [string, string, string],
+  "cuisine": [string, string, string],
+  "festivals": [string, string, string],
+  "knownFor": string,
+  "cultureDescription": string
 }`;
 
-    const userPrompt = `Provide current Head of State/President and the 3 Goods and 3 Bads for the country: "${country}".`;
+    const userPrompt = `Provide comprehensive cultural, culinary, and geopolitical facts for the country: "${country}". Include current Head of State/President, 3 Goods, 3 Bads, 3 surprising fun facts, 3 famous dishes, 3 major festivals, a memorable "known for" summary line, and a 2-3 sentence cultural overview.`;
 
     const aiRes = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
       messages: [
@@ -58,7 +63,7 @@ When given a country name, respond strictly with valid JSON without markdown for
         { role: 'user', content: userPrompt },
       ],
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 800,
     });
 
     let raw = typeof aiRes === 'string' ? aiRes : (aiRes.response || JSON.stringify(aiRes));
@@ -80,7 +85,7 @@ function getStaticFallback(country: string, note?: string) {
     country,
     leader: { name: 'Head of State', title: 'President / Prime Minister' },
     the_good: [
-      'Rich cultural traditions, heritage, and renowned culinary highlights.',
+      'Rich cultural traditions, architecture, and renowned regional gastronomy.',
       'Diverse geographic landscapes and welcoming local communities.',
       'Active regional innovation and cultural contributions.'
     ],
@@ -89,6 +94,23 @@ function getStaticFallback(country: string, note?: string) {
       'Economic sensitivities influenced by global inflation and commodity cycles.',
       'Seasonal climatic extremes requiring advance travel preparation.'
     ],
+    funFacts: [
+      `${country} possesses unique geographic landscapes and biodiversity.`,
+      `Centuries-old folk traditions and crafts are still actively practiced today.`,
+      `Local cultural customs reflect a deep sense of community and heritage.`
+    ],
+    cuisine: [
+      'Traditional spiced grain and stew specialties',
+      'Indigenous slow-roasted meats and fresh regional produce',
+      'Artisanal pastries and heritage desserts'
+    ],
+    festivals: [
+      'National Independence & Heritage Celebrations',
+      'Traditional Seasonal Harvest Festival',
+      'Folk Music and Cultural Dances'
+    ],
+    knownFor: `A distinctive nation celebrated for its cultural heritage and resilient traditions.`,
+    cultureDescription: `${country} is celebrated for its historic landmarks, welcoming communities, and vibrant artistic expression woven through daily life.`,
     fallback: true,
     note
   };

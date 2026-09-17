@@ -87,7 +87,7 @@ export default {
           );
         }
 
-        const systemPrompt = `You are a concise, factual world geopolitics and travel expert.
+        const systemPrompt = `You are an expert world geographer, cultural historian, and travel writer.
 When given a country name, you MUST respond ONLY with a strictly valid JSON object without markdown formatting, code blocks, or preamble.
 The JSON format must be exactly:
 {
@@ -102,13 +102,30 @@ The JSON format must be exactly:
     string (1 concise sentence highlighting a 3rd positive aspect)
   ],
   "the_bad": [
-    string (1 concise sentence highlighting a realistic socio-economic, environmental, or travel challenge),
+    string (1 concise sentence highlighting a realistic challenge),
     string (1 concise sentence highlighting a 2nd realistic challenge),
     string (1 concise sentence highlighting a 3rd realistic challenge)
-  ]
+  ],
+  "funFacts": [
+    string (1 surprising, engaging fun fact),
+    string (a 2nd fun fact),
+    string (a 3rd fun fact)
+  ],
+  "cuisine": [
+    string (famous dish name and brief description),
+    string (a 2nd famous dish),
+    string (a 3rd famous dish)
+  ],
+  "festivals": [
+    string (major festival/celebration name and timing),
+    string (a 2nd major festival),
+    string (a 3rd major festival)
+  ],
+  "knownFor": string (one vivid sentence summarizing what makes this country iconic),
+  "cultureDescription": string (2-3 sentences describing the soul and everyday life of the culture)
 }`;
 
-        const userPrompt = `Provide the current Head of State/President and the 3 Goods and 3 Bads for the country: "${country}".`;
+        const userPrompt = `Provide comprehensive cultural, culinary, and geopolitical facts for the country: "${country}". Include current Head of State/President, 3 Goods, 3 Bads, 3 surprising fun facts, 3 famous dishes, 3 major festivals, a memorable "known for" line, and a 2-3 sentence cultural overview.`;
 
         const aiResponse = await env.AI.run('@cf/meta/llama-3-8b-instruct', {
           messages: [
@@ -116,7 +133,7 @@ The JSON format must be exactly:
             { role: 'user', content: userPrompt },
           ],
           temperature: 0.3,
-          max_tokens: 500,
+          max_tokens: 800,
         });
 
         let rawText = typeof aiResponse === 'string' ? aiResponse : (aiResponse.response || JSON.stringify(aiResponse));

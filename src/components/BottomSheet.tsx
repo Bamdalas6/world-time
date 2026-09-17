@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  X, Sun, Moon, Wind, Droplets, Compass, Sparkles, 
-  CheckCircle2, AlertTriangle, UserCheck, RefreshCw, Cpu
+import {
+  X, Sun, Moon, Wind, Droplets, Compass, Sparkles,
+  CheckCircle2, AlertTriangle, UserCheck, RefreshCw, Cpu,
+  Globe, Phone, Coins, Users, Utensils, Lightbulb, Quote, ChevronDown,
 } from 'lucide-react';
 import { City, WeatherData, CountryInsights, TimeFormat, TempUnit } from '../types';
 import { getLocalTimeDetails } from '../services/timeUtils';
@@ -18,363 +19,246 @@ interface BottomSheetProps {
   isDark: boolean;
 }
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({
-  isOpen,
-  onClose,
-  city,
-  weather,
-  timeFormat,
-  tempUnit,
-  isDark,
-}) => {
-  const [liveDate, setLiveDate] = useState<Date>(new Date());
-  const [insights, setInsights] = useState<CountryInsights | null>(null);
-  const [isLoadingAi, setIsLoadingAi] = useState<boolean>(false);
-  const [aiError, setAiError] = useState<string | null>(null);
+const sectionVariants = {
+  hidden: { opacity: 0, y: 20 },
+  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.4, ease: 'easeOut' } }),
+};
 
-  // Live second ticker
+export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, city, weather, timeFormat, tempUnit, isDark }) => {
+  const [liveDate, setLiveDate] = useState(new Date());
+  const [insights, setInsights] = useState<CountryInsights | null>(null);
+  const [isLoadingAi, setIsLoadingAi] = useState(false);
+  const [expandedFact, setExpandedFact] = useState<number | null>(null);
+
   useEffect(() => {
     if (!isOpen) return;
-    const interval = setInterval(() => {
-      setLiveDate(new Date());
-    }, 1000);
+    const interval = setInterval(() => setLiveDate(new Date()), 1000);
     return () => clearInterval(interval);
   }, [isOpen]);
 
-  // Fetch AI insights whenever city changes
   useEffect(() => {
     if (!isOpen || !city) return;
-
-    let isMounted = true;
+    let mounted = true;
     setIsLoadingAi(true);
-    setAiError(null);
-
-    fetchCountryInsights(city.country)
-      .then((data) => {
-        if (isMounted) {
-          setInsights(data);
-          setIsLoadingAi(false);
-        }
-      })
-      .catch((err) => {
-        if (isMounted) {
-          setAiError(err.message || 'Failed to load insights');
-          setIsLoadingAi(false);
-        }
-      });
-
-    return () => {
-      isMounted = false;
-    };
+    setInsights(null);
+    fetchCountryInsights(city.country).then((d) => { if (mounted) { setInsights(d); setIsLoadingAi(false); } }).catch(() => { if (mounted) setIsLoadingAi(false); });
+    return () => { mounted = false; };
   }, [isOpen, city]);
 
-  const handleRefreshAi = () => {
-    if (!city) return;
-    setIsLoadingAi(true);
-    fetchCountryInsights(city.country).then((data) => {
-      setInsights(data);
-      setIsLoadingAi(false);
-    });
-  };
-
   if (!city) return null;
+  const t = getLocalTimeDetails(city.timezone, liveDate, timeFormat === '24h');
+  const fmtTemp = (c?: number) => { if (c === undefined) return '--'; return tempUnit === 'F' ? `${Math.round((c * 9) / 5 + 32)}°F` : `${c}°C`; };
 
-  const timeDetails = getLocalTimeDetails(city.timezone, liveDate, timeFormat === '24h');
-
-  // Temp conversion
-  const formatTemp = (celsius?: number) => {
-    if (celsius === undefined) return '--';
-    if (tempUnit === 'F') {
-      return `${Math.round((celsius * 9) / 5 + 32)}°F`;
-    }
-    return `${celsius}°C`;
-  };
+  const cardCls = isDark ? 'bg-zinc-800/60 border-zinc-700/50' : 'bg-white/80 border-zinc-200/80';
 
   return (
     <AnimatePresence>
       {isOpen && (
         <>
-          {/* Backdrop overlay */}
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm" />
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm"
-          />
-
-          {/* Sliding Bottom Sheet Modal */}
-          <motion.div
-            initial={{ y: '100%' }}
-            animate={{ y: 0 }}
-            exit={{ y: '100%' }}
+            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 28, stiffness: 300 }}
-            drag="y"
-            dragConstraints={{ top: 0 }}
-            dragElastic={0.2}
-            onDragEnd={(_, info) => {
-              if (info.offset.y > 100) onClose();
-            }}
-            className={`fixed inset-x-0 bottom-0 z-50 max-h-[88vh] rounded-t-[36px] overflow-hidden flex flex-col shadow-2xl transition-colors duration-500 border-t ${
-              isDark
-                ? 'bg-zinc-900/95 text-white border-zinc-700/80 backdrop-blur-xl'
-                : 'bg-white/95 text-zinc-900 border-zinc-200/80 backdrop-blur-xl'
-            }`}
+            drag="y" dragConstraints={{ top: 0 }} dragElastic={0.2}
+            onDragEnd={(_, info) => { if (info.offset.y > 100) onClose(); }}
+            className={`fixed inset-x-0 bottom-0 z-50 max-h-[92vh] rounded-t-[36px] overflow-hidden flex flex-col shadow-2xl border-t ${isDark ? 'bg-zinc-900/95 text-white border-zinc-700/80 backdrop-blur-xl' : 'bg-[#fafafa]/95 text-zinc-900 border-zinc-200/80 backdrop-blur-xl'}`}
           >
-            {/* Drag Handle Bar */}
-            <div className="w-full pt-3 pb-2 flex justify-center cursor-grab active:cursor-grabbing">
+            {/* Drag Handle */}
+            <div className="w-full pt-3 pb-1 flex justify-center cursor-grab active:cursor-grabbing shrink-0">
               <div className={`w-12 h-1.5 rounded-full ${isDark ? 'bg-zinc-700' : 'bg-zinc-300'}`} />
             </div>
 
-            {/* Modal Header */}
-            <div className="px-6 py-2 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-500">
-                  {timeDetails.offsetStr}
-                </span>
-                <span className="text-xs opacity-60 font-mono">
-                  {city.timezone}
-                </span>
-              </div>
-
-              <button
-                onClick={onClose}
-                className={`p-2 rounded-full transition-colors ${
-                  isDark ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
-                }`}
-              >
-                <X className="w-4 h-4" />
-              </button>
+            {/* Close */}
+            <div className="px-5 pb-1 flex justify-end shrink-0">
+              <button onClick={onClose} className={`p-2 rounded-full ${isDark ? 'bg-zinc-800 text-zinc-300' : 'bg-zinc-200 text-zinc-700'}`}><X className="w-4 h-4" /></button>
             </div>
 
-            {/* Scrollable Content Container */}
-            <div className="flex-1 overflow-y-auto px-6 pt-2 pb-12 space-y-6 no-scrollbar">
-              {/* 1. Time & City Hero Banner */}
-              <div className="flex flex-col items-center text-center space-y-1 py-2">
-                <h2 className="text-3xl font-extrabold tracking-tight">
-                  {city.name}
-                </h2>
-                <p className="text-sm font-medium opacity-60">
-                  {city.country} • {timeDetails.dateString}
-                </p>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-5 pb-14 space-y-5 no-scrollbar">
 
-                {/* Big live ticking digital clock */}
-                <div className="pt-2 flex items-center space-x-3">
-                  <span className="text-5xl font-black tracking-tight font-mono">
-                    {timeDetails.fullTimeString}
-                  </span>
-                  <div className="p-2.5 rounded-2xl bg-amber-400/10 text-amber-500">
-                    {timeDetails.isDay ? (
-                      <Sun className="w-7 h-7 fill-amber-400 animate-pulse" />
-                    ) : (
-                      <Moon className="w-7 h-7 text-indigo-300 fill-indigo-300/30" />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* 2. Weather Conditions Grid */}
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xs font-bold uppercase tracking-wider opacity-60">
-                    Current Atmospheric Conditions
-                  </h3>
-                  <span className="text-[11px] text-emerald-500 font-medium">
-                    via Open-Meteo Edge
-                  </span>
-                </div>
-
-                {weather ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                    {/* Temperature */}
-                    <div className={`p-3.5 rounded-2xl flex flex-col justify-between ${
-                      isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'
-                    }`}>
-                      <div className="flex items-center justify-between text-xs opacity-60">
-                        <span>Temp</span>
-                        <Sun className="w-3.5 h-3.5 text-amber-500" />
-                      </div>
-                      <div className="mt-2">
-                        <span className="text-2xl font-bold font-mono">
-                          {formatTemp(weather.temperature)}
-                        </span>
-                        <p className="text-[11px] opacity-60 truncate">
-                          Feels {formatTemp(weather.feelsLike)}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Condition */}
-                    <div className={`p-3.5 rounded-2xl flex flex-col justify-between ${
-                      isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'
-                    }`}>
-                      <div className="flex items-center justify-between text-xs opacity-60">
-                        <span>Sky</span>
-                        <Compass className="w-3.5 h-3.5 text-blue-500" />
-                      </div>
-                      <div className="mt-2">
-                        <span className="text-sm font-bold truncate block">
-                          {weather.description}
-                        </span>
-                        <p className="text-[11px] opacity-60">
-                          {weather.isDay ? 'Daytime' : 'Nighttime'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Humidity */}
-                    <div className={`p-3.5 rounded-2xl flex flex-col justify-between ${
-                      isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'
-                    }`}>
-                      <div className="flex items-center justify-between text-xs opacity-60">
-                        <span>Humidity</span>
-                        <Droplets className="w-3.5 h-3.5 text-sky-500" />
-                      </div>
-                      <div className="mt-2">
-                        <span className="text-2xl font-bold font-mono">
-                          {weather.humidity}%
-                        </span>
-                        <p className="text-[11px] opacity-60">Relative</p>
-                      </div>
-                    </div>
-
-                    {/* UV & Wind */}
-                    <div className={`p-3.5 rounded-2xl flex flex-col justify-between ${
-                      isDark ? 'bg-zinc-800/60' : 'bg-zinc-100/80'
-                    }`}>
-                      <div className="flex items-center justify-between text-xs opacity-60">
-                        <span>UV & Wind</span>
-                        <Wind className="w-3.5 h-3.5 text-teal-500" />
-                      </div>
-                      <div className="mt-2">
-                        <span className="text-sm font-bold font-mono">
-                          UV {weather.uvIndex}
-                        </span>
-                        <p className="text-[11px] opacity-60">
-                          {weather.windSpeed} km/h
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {/* 1. HERO BANNER */}
+              <motion.div custom={0} variants={sectionVariants} initial="hidden" animate="visible" className="relative w-full h-44 rounded-3xl overflow-hidden shadow-lg">
+                {city.avatarUrl ? (
+                  <img src={city.avatarUrl} alt={city.country} className="w-full h-full object-cover" />
                 ) : (
-                  <div className="p-4 rounded-2xl bg-zinc-800/40 text-center text-xs opacity-60">
-                    Loading live atmospheric metrics...
+                  <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-gradient-to-br from-zinc-800 to-zinc-900' : 'bg-gradient-to-br from-amber-100 to-orange-200'}`}>
+                    <span className="text-7xl">{city.flag}</span>
                   </div>
                 )}
-              </div>
-
-              {/* 3. Cloudflare Workers AI Country Insights */}
-              <div className="space-y-3 pt-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <div className="p-1 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 text-white shadow-sm">
-                      <Cpu className="w-3.5 h-3.5" />
-                    </div>
-                    <h3 className="text-xs font-bold uppercase tracking-wider">
-                      Cloudflare Workers AI Insights
-                    </h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                <div className="absolute bottom-4 left-5 text-white">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="text-2xl">{city.flag}</span>
+                    <span className="text-2xl font-extrabold tracking-tight">{city.country}</span>
                   </div>
+                  <p className="text-sm opacity-80">{city.name} • {city.continent}</p>
+                </div>
+              </motion.div>
 
-                  <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-mono font-medium px-2 py-0.5 rounded bg-zinc-500/15 opacity-80">
-                      @cf/meta/llama-3-8b-instruct
-                    </span>
-                    <button
-                      onClick={handleRefreshAi}
-                      disabled={isLoadingAi}
-                      className="p-1 hover:rotate-180 transition-transform duration-500 opacity-70 hover:opacity-100 disabled:opacity-40"
-                      title="Re-generate Insights"
-                    >
-                      <RefreshCw className={`w-3.5 h-3.5 ${isLoadingAi ? 'animate-spin' : ''}`} />
-                    </button>
+              {/* 2. LIVE CLOCK */}
+              <motion.div custom={1} variants={sectionVariants} initial="hidden" animate="visible" className="flex flex-col items-center text-center py-2">
+                <div className="flex items-center space-x-3">
+                  <span className="text-5xl font-black tracking-tight font-mono">{t.fullTimeString}</span>
+                  <div className={`p-2.5 rounded-2xl ${t.isDay ? 'bg-amber-400/15 text-amber-500' : 'bg-indigo-400/15 text-indigo-400'}`}>
+                    {t.isDay ? <Sun className="w-7 h-7 fill-current" /> : <Moon className="w-7 h-7 fill-current/30" />}
                   </div>
                 </div>
+                <p className="text-sm opacity-60 mt-1">{t.dateString} • {t.offsetStr}</p>
+              </motion.div>
 
-                {isLoadingAi ? (
-                  <div className={`p-6 rounded-2xl flex flex-col items-center justify-center space-y-3 ${
-                    isDark ? 'bg-zinc-800/40' : 'bg-zinc-100/60'
-                  }`}>
-                    <Sparkles className="w-6 h-6 text-amber-400 animate-spin" />
-                    <p className="text-xs font-medium opacity-70">
-                      Querying Cloudflare Workers AI for {city.country}...
-                    </p>
+              {/* 3. QUICK STATS GRID */}
+              <motion.div custom={2} variants={sectionVariants} initial="hidden" animate="visible" className="grid grid-cols-3 gap-2.5">
+                {[
+                  { icon: <Users className="w-3.5 h-3.5" />, label: 'Population', value: city.population },
+                  { icon: <Globe className="w-3.5 h-3.5" />, label: 'Languages', value: city.languages.slice(0, 2).join(', ') },
+                  { icon: <Coins className="w-3.5 h-3.5" />, label: 'Currency', value: city.currency.split(' (')[0] },
+                  { icon: <Phone className="w-3.5 h-3.5" />, label: 'Calling', value: city.callingCode },
+                  { icon: <Compass className="w-3.5 h-3.5" />, label: 'Continent', value: city.continent },
+                  { icon: <Globe className="w-3.5 h-3.5" />, label: 'Timezone', value: t.offsetStr },
+                ].map((s, i) => (
+                  <div key={i} className={`p-3 rounded-2xl border text-center ${cardCls}`}>
+                    <div className="flex justify-center mb-1 opacity-50">{s.icon}</div>
+                    <p className="text-[10px] uppercase tracking-wider opacity-50 font-semibold">{s.label}</p>
+                    <p className="text-xs font-bold mt-0.5 truncate">{s.value}</p>
                   </div>
-                ) : insights ? (
-                  <div className="space-y-4">
-                    {/* Head of State / Leader Card */}
-                    <div className={`p-4 rounded-2xl flex items-center justify-between border ${
-                      isDark ? 'bg-zinc-800/50 border-zinc-700/60' : 'bg-zinc-50 border-zinc-200'
-                    }`}>
-                      <div className="flex items-center space-x-3">
-                        <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
-                          <UserCheck className="w-5 h-5" />
-                        </div>
-                        <div>
-                          <p className="text-[11px] uppercase tracking-wider font-semibold opacity-60">
-                            {insights.leader?.title || 'Head of State'}
-                          </p>
-                          <p className="text-base font-extrabold tracking-tight">
-                            {insights.leader?.name || 'Current Head of State'}
-                          </p>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold">
-                        Official
-                      </span>
-                    </div>
+                ))}
+              </motion.div>
 
-                    {/* The Good (3 Positives) */}
-                    <div className={`p-4 rounded-2xl border space-y-2.5 ${
-                      isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50/70 border-emerald-200'
-                    }`}>
-                      <div className="flex items-center space-x-2 text-emerald-500">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span className="text-xs font-extrabold uppercase tracking-wider">
-                          The Good (Highlights & Strengths)
-                        </span>
+              {/* 4. WEATHER */}
+              {weather && (
+                <motion.div custom={3} variants={sectionVariants} initial="hidden" animate="visible" className="space-y-2">
+                  <h3 className="text-xs font-bold uppercase tracking-wider opacity-50">Current Weather</h3>
+                  <div className="grid grid-cols-4 gap-2">
+                    {[
+                      { icon: <Sun className="w-3.5 h-3.5 text-amber-500" />, label: 'Temp', val: fmtTemp(weather.temperature), sub: `Feels ${fmtTemp(weather.feelsLike)}` },
+                      { icon: <Droplets className="w-3.5 h-3.5 text-sky-500" />, label: 'Humidity', val: `${weather.humidity}%`, sub: 'Relative' },
+                      { icon: <Wind className="w-3.5 h-3.5 text-teal-500" />, label: 'Wind', val: `${weather.windSpeed}km/h`, sub: `UV ${weather.uvIndex}` },
+                      { icon: <Compass className="w-3.5 h-3.5 text-blue-500" />, label: 'Sky', val: weather.description, sub: weather.isDay ? 'Day' : 'Night' },
+                    ].map((w, i) => (
+                      <div key={i} className={`p-3 rounded-2xl border ${cardCls}`}>
+                        <div className="flex items-center justify-between mb-1"><span className="text-[10px] opacity-50">{w.label}</span>{w.icon}</div>
+                        <p className="text-sm font-bold truncate">{w.val}</p>
+                        <p className="text-[10px] opacity-50 truncate">{w.sub}</p>
                       </div>
-                      <ul className="space-y-2 text-xs leading-relaxed opacity-90">
-                        {insights.the_good?.map((point, i) => (
-                          <li key={i} className="flex items-start space-x-2">
-                            <span className="text-emerald-500 font-bold">•</span>
-                            <span>{point}</span>
-                          </li>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* AI INSIGHTS */}
+              {isLoadingAi ? (
+                <motion.div custom={4} variants={sectionVariants} initial="hidden" animate="visible" className={`p-8 rounded-2xl flex flex-col items-center space-y-3 border ${cardCls}`}>
+                  <Sparkles className="w-8 h-8 text-amber-400 animate-spin" />
+                  <p className="text-sm font-medium opacity-70">Generating cultural insights for {city.country}...</p>
+                </motion.div>
+              ) : insights ? (
+                <>
+                  {/* 5. KNOWN FOR */}
+                  {insights.knownFor && (
+                    <motion.div custom={4} variants={sectionVariants} initial="hidden" animate="visible" className={`p-5 rounded-2xl border relative overflow-hidden ${isDark ? 'bg-amber-950/20 border-amber-800/40' : 'bg-amber-50/80 border-amber-200'}`}>
+                      <Quote className="absolute top-3 left-3 w-5 h-5 text-amber-400/40" />
+                      <p className="text-sm font-semibold italic pl-6 leading-relaxed">{insights.knownFor}</p>
+                    </motion.div>
+                  )}
+
+                  {/* 6. CULTURE & TRADITIONS */}
+                  {insights.cultureDescription && (
+                    <motion.div custom={5} variants={sectionVariants} initial="hidden" animate="visible" className="space-y-2">
+                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-50">🎭 Culture & Traditions</h3>
+                      <p className="text-xs leading-relaxed opacity-80">{insights.cultureDescription}</p>
+                    </motion.div>
+                  )}
+
+                  {/* 7. FAMOUS CUISINE */}
+                  {insights.cuisine.length > 0 && (
+                    <motion.div custom={6} variants={sectionVariants} initial="hidden" animate="visible" className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Utensils className="w-4 h-4 text-orange-500" />
+                        <h3 className="text-xs font-bold uppercase tracking-wider opacity-50">Famous Cuisine</h3>
+                      </div>
+                      <div className="space-y-2">
+                        {insights.cuisine.map((dish, i) => (
+                          <div key={i} className={`px-4 py-3 rounded-2xl border ${cardCls}`}>
+                            <p className="text-xs font-semibold">🍽️ {dish}</p>
+                          </div>
                         ))}
-                      </ul>
-                    </div>
-
-                    {/* The Bad (3 Challenges) */}
-                    <div className={`p-4 rounded-2xl border space-y-2.5 ${
-                      isDark ? 'bg-amber-950/20 border-amber-800/40' : 'bg-amber-50/70 border-amber-200'
-                    }`}>
-                      <div className="flex items-center space-x-2 text-amber-500">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span className="text-xs font-extrabold uppercase tracking-wider">
-                          The Bad (Challenges & Caveats)
-                        </span>
                       </div>
-                      <ul className="space-y-2 text-xs leading-relaxed opacity-90">
-                        {insights.the_bad?.map((point, i) => (
-                          <li key={i} className="flex items-start space-x-2">
-                            <span className="text-amber-500 font-bold">•</span>
-                            <span>{point}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
+                    </motion.div>
+                  )}
 
-                    {insights.fallback && insights.note && (
-                      <p className="text-[10px] text-center opacity-40 font-mono">
-                        {insights.note}
-                      </p>
-                    )}
-                  </div>
-                ) : (
-                  <div className="p-4 rounded-2xl bg-zinc-800/30 text-center text-xs opacity-70">
-                    {aiError || 'Unable to retrieve insights.'}
-                  </div>
-                )}
-              </div>
+                  {/* 8. FESTIVALS */}
+                  {insights.festivals.length > 0 && (
+                    <motion.div custom={7} variants={sectionVariants} initial="hidden" animate="visible" className="space-y-2">
+                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-50">🎉 Festivals & Celebrations</h3>
+                      <div className="space-y-2">
+                        {insights.festivals.map((fest, i) => (
+                          <div key={i} className={`px-4 py-3 rounded-2xl border ${cardCls}`}>
+                            <p className="text-xs font-semibold">🎊 {fest}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* 9. FUN FACTS */}
+                  {insights.funFacts.length > 0 && (
+                    <motion.div custom={8} variants={sectionVariants} initial="hidden" animate="visible" className="space-y-2">
+                      <h3 className="text-xs font-bold uppercase tracking-wider opacity-50">💡 Fun Facts</h3>
+                      <div className="space-y-2">
+                        {insights.funFacts.map((fact, i) => (
+                          <div key={i} onClick={() => setExpandedFact(expandedFact === i ? null : i)} className={`px-4 py-3 rounded-2xl border cursor-pointer transition-all ${isDark ? 'bg-purple-950/20 border-purple-800/40 hover:bg-purple-950/30' : 'bg-purple-50/80 border-purple-200 hover:bg-purple-100'}`}>
+                            <div className="flex items-start justify-between">
+                              <p className={`text-xs font-semibold pr-2 ${expandedFact === i ? '' : 'line-clamp-1'}`}>
+                                <Lightbulb className="w-3.5 h-3.5 inline mr-1 text-purple-500" />{fact}
+                              </p>
+                              <ChevronDown className={`w-3.5 h-3.5 shrink-0 mt-0.5 opacity-50 transition-transform ${expandedFact === i ? 'rotate-180' : ''}`} />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+
+                  {/* 10. HEAD OF STATE */}
+                  <motion.div custom={9} variants={sectionVariants} initial="hidden" animate="visible" className={`p-4 rounded-2xl border flex items-center justify-between ${cardCls}`}>
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500"><UserCheck className="w-5 h-5" /></div>
+                      <div>
+                        <p className="text-[10px] uppercase tracking-wider font-semibold opacity-50">{insights.leader?.title}</p>
+                        <p className="text-base font-extrabold tracking-tight">{insights.leader?.name}</p>
+                      </div>
+                    </div>
+                  </motion.div>
+
+                  {/* 11. THE GOOD */}
+                  <motion.div custom={10} variants={sectionVariants} initial="hidden" animate="visible" className={`p-4 rounded-2xl border space-y-2 ${isDark ? 'bg-emerald-950/20 border-emerald-800/40' : 'bg-emerald-50/70 border-emerald-200'}`}>
+                    <div className="flex items-center space-x-2 text-emerald-500">
+                      <CheckCircle2 className="w-4 h-4" />
+                      <span className="text-xs font-extrabold uppercase tracking-wider">The Good</span>
+                    </div>
+                    <ul className="space-y-2 text-xs leading-relaxed opacity-90">
+                      {insights.the_good.map((p, i) => <li key={i} className="flex items-start space-x-2"><span className="text-emerald-500 font-bold">•</span><span>{p}</span></li>)}
+                    </ul>
+                  </motion.div>
+
+                  {/* THE BAD */}
+                  <motion.div custom={11} variants={sectionVariants} initial="hidden" animate="visible" className={`p-4 rounded-2xl border space-y-2 ${isDark ? 'bg-amber-950/20 border-amber-800/40' : 'bg-amber-50/70 border-amber-200'}`}>
+                    <div className="flex items-center space-x-2 text-amber-500">
+                      <AlertTriangle className="w-4 h-4" />
+                      <span className="text-xs font-extrabold uppercase tracking-wider">The Bad</span>
+                    </div>
+                    <ul className="space-y-2 text-xs leading-relaxed opacity-90">
+                      {insights.the_bad.map((p, i) => <li key={i} className="flex items-start space-x-2"><span className="text-amber-500 font-bold">•</span><span>{p}</span></li>)}
+                    </ul>
+                  </motion.div>
+
+                  {/* 12. AI FOOTER */}
+                  <motion.div custom={12} variants={sectionVariants} initial="hidden" animate="visible" className="flex items-center justify-center space-x-2 pt-2 pb-4">
+                    <Cpu className="w-3.5 h-3.5 text-amber-500" />
+                    <span className="text-[10px] font-mono opacity-40">Powered by Cloudflare Workers AI • @cf/meta/llama-3-8b-instruct</span>
+                  </motion.div>
+                </>
+              ) : null}
             </div>
           </motion.div>
         </>

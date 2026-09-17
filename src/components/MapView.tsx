@@ -200,16 +200,20 @@ export const MapView: React.FC<MapViewProps> = ({
               : 'bg-zinc-900 text-white border-zinc-700 shadow-xl'
           }`}
         >
-          {/* Left: Offset & City Name */}
+          {/* Left: Offset, Flag & Country Name */}
           <div className="flex flex-col">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 font-mono">
-              {timeDetails.offsetStr}
-            </span>
-            <span className="text-lg font-bold tracking-tight">
-              {selectedCity.name}
+            <div className="flex items-center space-x-1.5">
+              <span className="text-sm">{selectedCity.flag}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 font-mono">
+                {timeDetails.offsetStr}
+              </span>
+              <span className="text-[10px] text-zinc-500 font-mono">• {selectedCity.continent}</span>
+            </div>
+            <span className="text-lg font-extrabold tracking-tight">
+              {selectedCity.country}
             </span>
             <span className="text-xs text-zinc-400">
-              {selectedCity.country}
+              Capital: {selectedCity.name}
             </span>
           </div>
 

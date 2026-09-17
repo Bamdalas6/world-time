@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sun, Moon, CloudRain, Snowflake, Cloud, ChevronRight } from 'lucide-react';
+import { Sun, Moon, ChevronRight } from 'lucide-react';
 import { City, WeatherData, TimeFormat, TempUnit } from '../types';
 import { getLocalTimeDetails } from '../services/timeUtils';
 
@@ -32,7 +32,7 @@ export const ListView: React.FC<ListViewProps> = ({
         const isSelected = selectedCity.id === city.id;
         const timeDetails = getLocalTimeDetails(city.timezone, baseDate, timeFormat === '24h');
         const weather = weatherMap[city.id];
-        
+
         // Convert temp if unit is F
         let displayTemp: string | null = null;
         if (weather) {
@@ -46,7 +46,7 @@ export const ListView: React.FC<ListViewProps> = ({
             onClick={() => {
               onSelectCity(city);
             }}
-            className={`group relative w-full rounded-[26px] p-5 cursor-pointer select-none transition-all duration-300 transform active:scale-[0.98] ${
+            className={`group relative w-full rounded-[28px] p-5 cursor-pointer select-none transition-all duration-300 transform active:scale-[0.98] ${
               isSelected
                 ? isDark
                   ? 'bg-zinc-800/95 text-white shadow-2xl ring-1 ring-white/10'
@@ -57,28 +57,34 @@ export const ListView: React.FC<ListViewProps> = ({
             }`}
           >
             <div className="flex items-center justify-between">
-              {/* Left Column: Offset & City Name */}
+              {/* Left Column: Flag, Offset & Country/City Name */}
               <div className="flex flex-col space-y-1">
-                <span
-                  className={`text-[12px] font-semibold tracking-wider uppercase font-mono ${
-                    isSelected
-                      ? 'text-zinc-400'
-                      : isDark
-                      ? 'text-zinc-400'
-                      : 'text-zinc-500'
-                  }`}
-                >
-                  {timeDetails.offsetStr}
+                <div className="flex items-center space-x-1.5">
+                  <span className="text-base">{city.flag}</span>
+                  <span
+                    className={`text-[12px] font-semibold tracking-wider uppercase font-mono ${
+                      isSelected
+                        ? 'text-zinc-400'
+                        : isDark
+                        ? 'text-zinc-400'
+                        : 'text-zinc-500'
+                    }`}
+                  >
+                    {timeDetails.offsetStr}
+                  </span>
+                  <span className="text-[11px] opacity-40 font-mono">• {city.continent}</span>
+                </div>
+
+                <span className="text-[21px] font-extrabold tracking-tight">
+                  {city.country}
                 </span>
-                <span className="text-[20px] font-bold tracking-tight">
-                  {city.name}
-                </span>
+
                 <span
-                  className={`text-xs ${
+                  className={`text-xs font-semibold ${
                     isSelected ? 'text-zinc-400' : 'text-zinc-500'
                   }`}
                 >
-                  {city.country}
+                  Capital: {city.name} {city.population ? `• ${city.population}` : ''}
                 </span>
               </div>
 
@@ -94,13 +100,15 @@ export const ListView: React.FC<ListViewProps> = ({
                   {/* Weather pill badge */}
                   {displayTemp && (
                     <div className="flex items-center justify-end space-x-1 mt-1">
-                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
-                        isSelected 
-                          ? 'bg-zinc-800 text-zinc-300' 
-                          : isDark 
-                          ? 'bg-zinc-800/90 text-zinc-300' 
-                          : 'bg-zinc-100 text-zinc-600'
-                      }`}>
+                      <span
+                        className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                          isSelected
+                            ? 'bg-zinc-800 text-zinc-300'
+                            : isDark
+                            ? 'bg-zinc-800/90 text-zinc-300'
+                            : 'bg-zinc-100 text-zinc-600'
+                        }`}
+                      >
                         {displayTemp}
                       </span>
                     </div>
@@ -122,10 +130,12 @@ export const ListView: React.FC<ListViewProps> = ({
                       onSelectCity(city);
                       onOpenDetails(city);
                     }}
-                    className={`mt-2 p-1 rounded-full transition-opacity opacity-70 hover:opacity-100 ${
-                      isSelected ? 'text-zinc-400 hover:text-white' : 'text-zinc-400'
+                    className={`mt-2 p-1.5 rounded-full transition-all opacity-70 hover:opacity-100 ${
+                      isSelected
+                        ? 'bg-zinc-800 text-amber-400 hover:bg-zinc-700'
+                        : 'bg-zinc-200/50 dark:bg-zinc-800 text-zinc-400'
                     }`}
-                    title="View Weather & AI Insights"
+                    title="Explore Country Culture & Insights"
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
