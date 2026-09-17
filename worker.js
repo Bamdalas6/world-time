@@ -153,6 +153,11 @@ The JSON format must be exactly:
       }
     }
 
+    // Serve static frontend assets from dist (Cloudflare Workers with Static Assets)
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
     // Pass through or 404 for API routes
     return new Response(
       JSON.stringify({ error: 'Endpoint not found', available: ['/api/insights', '/api/weather', '/api/health'] }),

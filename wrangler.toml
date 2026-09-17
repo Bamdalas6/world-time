@@ -1,11 +1,16 @@
 name = "modern-world-time"
+main = "worker.js"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-# Cloudflare Pages static assets build output
+# Static assets directory for Cloudflare Workers with Assets & Pages
+[assets]
+directory = "./dist"
+
+# Legacy Pages build output compatibility
 pages_build_output_dir = "./dist"
 
-# Cloudflare Workers AI binding for meta llama-3-8b-instruct
+# Cloudflare Workers AI binding
 [ai]
 binding = "AI"
 
