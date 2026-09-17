@@ -8,13 +8,15 @@ import { BottomSheet } from './components/BottomSheet';
 import { SearchModal } from './components/SearchModal';
 import { TimeScrubber } from './components/TimeScrubber';
 import { WeatherOverlay } from './components/WeatherOverlay';
+import { CompareModal } from './components/CompareModal';
 import { City, WeatherData, ViewMode, TimeFormat, TempUnit } from './types';
 import { INITIAL_CITIES } from './data/cities';
+import { ALL_COUNTRIES } from './data/countries';
 import { fetchCityWeather } from './services/weatherApi';
 import { getLocalTimeDetails } from './services/timeUtils';
 
 export function App() {
-  // 1. Saved Cities
+  // 1. Saved Cities (Most recent at the top)
   const [cities, setCities] = useState<City[]>(() => {
     try {
       const saved = localStorage.getItem('mwt_saved_cities');
@@ -23,9 +25,9 @@ export function App() {
     return INITIAL_CITIES;
   });
 
-  // Selected City (Default: Los Angeles or Algiers as in mockup)
+  // Selected City (Default: first in saved cities or Los Angeles / Nigeria)
   const [selectedCity, setSelectedCity] = useState<City>(() => {
-    return cities.find((c) => c.id === 'los-angeles') || cities[0];
+    return cities[0] || ALL_COUNTRIES[0];
   });
 
   // View Mode: list or map
@@ -43,6 +45,11 @@ export function App() {
   const [isSearchOpen, setIsSearchOpen] = useState<boolean>(false);
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState<boolean>(false);
   const [bottomSheetCity, setBottomSheetCity] = useState<City | null>(null);
+
+  // Compare Time Difference Modal State
+  const [isCompareOpen, setIsCompareOpen] = useState<boolean>(false);
+  const [compareCityA, setCompareCityA] = useState<City | null>(null);
+  const [compareCityB, setCompareCityB] = useState<City | null>(null);
 
   // Weather Map Cache
   const [weatherMap, setWeatherMap] = useState<Record<string, WeatherData>>({});
@@ -64,7 +71,7 @@ export function App() {
   useEffect(() => {
     let isCurrent = true;
     const loadWeather = async () => {
-      for (const city of cities) {
+      for (const city of cities.slice(0, 15)) {
         try {
           const w = await fetchCityWeather(city.latitude, city.longitude);
           if (isCurrent) {
@@ -100,9 +107,14 @@ export function App() {
     } catch (_) {}
   }, [cities]);
 
-  // Handlers
+  // HANDLER: SELECT CITY -> MOVE TO THE VERY TOP OF THE LIST
   const handleSelectCity = useCallback((city: City) => {
     setSelectedCity(city);
+    // Put recently selected city at the TOP so it is immediately visible
+    setCities((prev) => {
+      const filtered = prev.filter((c) => c.id !== city.id);
+      return [city, ...filtered];
+    });
   }, []);
 
   const handleOpenDetails = useCallback((city: City) => {
@@ -110,14 +122,28 @@ export function App() {
     setIsBottomSheetOpen(true);
   }, []);
 
+  // HANDLER: ADD CITY -> MOVE TO THE VERY TOP OF THE LIST
   const handleAddCity = useCallback((newCity: City) => {
     setCities((prev) => {
-      if (prev.some((c) => c.id === newCity.id)) return prev;
-      return [...prev, newCity];
+      const filtered = prev.filter((c) => c.id !== newCity.id);
+      return [newCity, ...filtered];
     });
     setSelectedCity(newCity);
     setIsSearchOpen(false);
   }, []);
+
+  // HANDLER: OPEN TIME COMPARATOR
+  const handleOpenCompare = useCallback((baseCity?: City) => {
+    const primary = baseCity || selectedCity;
+    setCompareCityA(primary);
+    // Find another distinct city for comparison
+    const secondary =
+      cities.find((c) => c.id !== primary.id) ||
+      ALL_COUNTRIES.find((c) => c.id !== primary.id) ||
+      ALL_COUNTRIES[1];
+    setCompareCityB(secondary);
+    setIsCompareOpen(true);
+  }, [selectedCity, cities]);
 
   // Top Status Bar time (system time)
   const statusBarTime = useMemo(() => {
@@ -131,7 +157,7 @@ export function App() {
       {/* Dynamic Weather & Atmospheric Gradients / Particles */}
       <WeatherOverlay weather={selectedWeather} isDay={selectedTimeDetails.isDay} />
 
-      {/* Main Top Header: Story reels + App Title */}
+      {/* Main Top Header: Story reels (ordered by recent) + App Title */}
       <TopHeader
         cities={cities}
         selectedCity={selectedCity}
@@ -181,6 +207,7 @@ export function App() {
         viewMode={viewMode}
         onToggleViewMode={() => setViewMode((v) => (v === 'list' ? 'map' : 'list'))}
         onOpenSearch={() => setIsSearchOpen(true)}
+        onOpenCompare={() => handleOpenCompare()}
         onToggleTimeScrubber={() => setIsScrubberOpen((prev) => !prev)}
         isScrubberOpen={isScrubberOpen}
         isDark={isDark}
@@ -195,14 +222,25 @@ export function App() {
         timeFormat={timeFormat}
         tempUnit={tempUnit}
         isDark={isDark}
+        onOpenCompare={(city) => handleOpenCompare(city)}
       />
 
-      {/* Search & Add City Modal */}
+      {/* Search & Add City Modal (All 195 countries) */}
       <SearchModal
         isOpen={isSearchOpen}
         onClose={() => setIsSearchOpen(false)}
         savedCities={cities}
         onAddCity={handleAddCity}
+        isDark={isDark}
+      />
+
+      {/* Time Difference Comparator Modal */}
+      <CompareModal
+        isOpen={isCompareOpen}
+        onClose={() => setIsCompareOpen(false)}
+        initialCityA={compareCityA}
+        initialCityB={compareCityB}
+        timeFormat={timeFormat}
         isDark={isDark}
       />
     </IOSContainer>

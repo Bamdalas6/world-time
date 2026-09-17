@@ -1,11 +1,12 @@
 import React from 'react';
-import { Search, Sliders, Globe, List, Clock } from 'lucide-react';
+import { Search, Globe, List, Clock, ArrowLeftRight } from 'lucide-react';
 import { ViewMode } from '../types';
 
 interface BottomNavProps {
   viewMode: ViewMode;
   onToggleViewMode: () => void;
   onOpenSearch: () => void;
+  onOpenCompare: () => void;
   onToggleTimeScrubber: () => void;
   isScrubberOpen: boolean;
   isDark: boolean;
@@ -15,6 +16,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({
   viewMode,
   onToggleViewMode,
   onOpenSearch,
+  onOpenCompare,
   onToggleTimeScrubber,
   isScrubberOpen,
   isDark,
@@ -31,23 +33,32 @@ export const BottomNav: React.FC<BottomNavProps> = ({
         <button
           onClick={onOpenSearch}
           className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/15 active:scale-90"
-          title="Search & Add Cities"
+          title="Search & Add Countries"
         >
           <Search className="w-5 h-5 stroke-[2.2]" />
         </button>
 
-        {/* 2. Time Scrubber / Travel Slider Toggle */}
+        {/* 2. Compare Time Difference Button */}
+        <button
+          onClick={onOpenCompare}
+          className="w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/15 active:scale-90"
+          title="Compare Time Difference Between Countries"
+        >
+          <ArrowLeftRight className="w-5 h-5 stroke-[2.2]" />
+        </button>
+
+        {/* 3. Time Scrubber / Travel Slider Toggle */}
         <button
           onClick={onToggleTimeScrubber}
           className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/15 active:scale-90 ${
             isScrubberOpen ? 'bg-amber-400 text-black shadow-lg hover:bg-amber-300' : ''
           }`}
-          title="Time Travel Scrubber"
+          title="Global Time Travel Scrubber"
         >
           <Clock className="w-5 h-5 stroke-[2.2]" />
         </button>
 
-        {/* 3. Map View / List View Toggle Button (Globe or List) */}
+        {/* 4. Map View / List View Toggle Button (Globe or List) */}
         <button
           onClick={onToggleViewMode}
           className={`w-11 h-11 rounded-full flex items-center justify-center transition-all duration-200 hover:bg-white/15 active:scale-90 ${

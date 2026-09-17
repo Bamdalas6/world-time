@@ -17,6 +17,7 @@ interface BottomSheetProps {
   timeFormat: TimeFormat;
   tempUnit: TempUnit;
   isDark: boolean;
+  onOpenCompare?: (city: City) => void;
 }
 
 const sectionVariants = {
@@ -24,7 +25,16 @@ const sectionVariants = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.4, ease: 'easeOut' } }),
 };
 
-export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, city, weather, timeFormat, tempUnit, isDark }) => {
+export const BottomSheet: React.FC<BottomSheetProps> = ({ 
+  isOpen, 
+  onClose, 
+  city, 
+  weather, 
+  timeFormat, 
+  tempUnit, 
+  isDark,
+  onOpenCompare 
+}) => {
   const [liveDate, setLiveDate] = useState(new Date());
   const [insights, setInsights] = useState<CountryInsights | null>(null);
   const [isLoadingAi, setIsLoadingAi] = useState(false);
@@ -105,6 +115,22 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({ isOpen, onClose, city,
                 </div>
                 <p className="text-sm opacity-60 mt-1">{t.dateString} • {t.offsetStr}</p>
               </motion.div>
+
+              {/* Compare Time Difference Button */}
+              {onOpenCompare && (
+                <motion.div custom={1.5} variants={sectionVariants} initial="hidden" animate="visible">
+                  <button
+                    onClick={() => {
+                      onClose();
+                      onOpenCompare(city);
+                    }}
+                    className="w-full py-3 px-4 rounded-2xl flex items-center justify-center space-x-2 font-bold text-xs bg-amber-400 text-black hover:bg-amber-300 shadow-md active:scale-[0.98] transition-all"
+                  >
+                    <span>⇄</span>
+                    <span>Compare Time Difference with Another Country</span>
+                  </button>
+                </motion.div>
+              )}
 
               {/* 3. QUICK STATS GRID */}
               <motion.div custom={2} variants={sectionVariants} initial="hidden" animate="visible" className="grid grid-cols-3 gap-2.5">

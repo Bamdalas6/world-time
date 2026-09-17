@@ -1,4 +1,5 @@
 import { CountryInsights } from '../types';
+import { getVerifiedLeader } from '../data/leaders';
 
 const insightsCache = new Map<string, CountryInsights>();
 
@@ -7,6 +8,8 @@ export async function fetchCountryInsights(country: string): Promise<CountryInsi
   if (insightsCache.has(normalizedKey)) {
     return insightsCache.get(normalizedKey)!;
   }
+
+  const verified = getVerifiedLeader(country);
 
   try {
     const response = await fetch(`/api/insights?country=${encodeURIComponent(country)}`, {
@@ -19,7 +22,9 @@ export async function fetchCountryInsights(country: string): Promise<CountryInsi
       if (data && data.the_good && data.the_bad) {
         const enriched: CountryInsights = {
           country: data.country || country,
-          leader: data.leader || { name: 'Head of State', title: 'President' },
+          leader: verified
+            ? { name: verified.name, title: verified.title }
+            : data.leader || { name: 'Head of State', title: 'President' },
           the_good: data.the_good || [],
           the_bad: data.the_bad || [],
           funFacts: data.funFacts || [],
@@ -28,7 +33,7 @@ export async function fetchCountryInsights(country: string): Promise<CountryInsi
           knownFor: data.knownFor || '',
           cultureDescription: data.cultureDescription || '',
           fallback: data.fallback,
-          note: data.note,
+          note: verified?.headOfState ? `Head of State: ${verified.headOfState}` : data.note,
         };
         insightsCache.set(normalizedKey, enriched);
         return enriched;
@@ -39,6 +44,12 @@ export async function fetchCountryInsights(country: string): Promise<CountryInsi
   }
 
   const fallback = generateCulturalInsights(country);
+  if (verified) {
+    fallback.leader = { name: verified.name, title: verified.title };
+    if (verified.headOfState) {
+      fallback.note = `Head of State: ${verified.headOfState}`;
+    }
+  }
   insightsCache.set(normalizedKey, fallback);
   return fallback;
 }
@@ -218,7 +229,7 @@ function generateCulturalInsights(country: string): CountryInsights {
       cultureDescription: 'Emirati culture balances proud Bedouin heritage with futuristic ambition. Traditional falconry and camel racing coexist with robot police and the world\'s tallest buildings. Hospitality remains sacred — Arabic coffee and dates greet every visitor. The UAE is a remarkable experiment in multiculturalism, where nearly 90% of residents are expatriates living alongside local traditions.',
     },
     nigeria: {
-      leader: { name: 'Bola Tinubu', title: 'President' },
+      leader: { name: 'Bola Ahmed Tinubu', title: 'President' },
       the_good: ['Africa\'s largest economy with a thriving tech scene ("Silicon Lagoon") and creative industries.', 'Nollywood is the world\'s second-largest film industry by volume.', 'Incredibly vibrant music (Afrobeats), fashion, and entrepreneurial energy.'],
       the_bad: ['Significant infrastructure gaps including unreliable power supply.', 'Security challenges in certain regions.', 'High inflation and currency volatility affecting daily living costs.'],
       funFacts: ['Nigeria has over 520 living languages — one of the most linguistically diverse nations on Earth.', 'Lagos was the fastest-growing city in Africa and is projected to become the world\'s largest city by 2100.', 'Afrobeats artists like Burna Boy and Wizkid have topped global charts, making Nigerian music a worldwide phenomenon.'],

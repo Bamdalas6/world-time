@@ -165,3 +165,160 @@ export function generateTerminatorSvgPath(now: Date = new Date(), width = 800, h
 
   return path;
 }
+
+export interface TimeDifferenceResult {
+  hoursDiff: number;
+  minutesDiff: number;
+  totalMinutes: number;
+  direction: 'ahead' | 'behind' | 'same';
+  formattedDiff: string;
+  dayRelation: 'same day' | 'next day (tomorrow)' | 'previous day (yesterday)';
+  summary: string;
+}
+
+/**
+ * Calculates exact time difference between Timezone B relative to Timezone A
+ * e.g., if tzA is Lagos (UTC+1) and tzB is Tokyo (UTC+9), returns +8 hours ahead
+ */
+export function getTimeDifference(
+  timezoneA: string,
+  timezoneB: string,
+  baseDate: Date = new Date()
+): TimeDifferenceResult {
+  try {
+    const timeA = new Date(baseDate.toLocaleString('en-US', { timeZone: timezoneA }));
+    const timeB = new Date(baseDate.toLocaleString('en-US', { timeZone: timezoneB }));
+
+    const diffMs = timeB.getTime() - timeA.getTime();
+    const totalMinutes = Math.round(diffMs / (1000 * 60));
+    const totalHours = totalMinutes / 60;
+
+    const absMinutes = Math.abs(totalMinutes);
+    const hours = Math.floor(absMinutes / 60);
+    const mins = absMinutes % 60;
+
+    let direction: 'ahead' | 'behind' | 'same' = 'same';
+    if (totalMinutes > 0) direction = 'ahead';
+    else if (totalMinutes < 0) direction = 'behind';
+
+    let formattedDiff = '';
+    if (direction === 'same') {
+      formattedDiff = 'Same Time';
+    } else {
+      const sign = direction === 'ahead' ? '+' : '-';
+      formattedDiff = `${sign}${hours}h ${mins > 0 ? `${mins}m` : ''}`.trim();
+    }
+
+    // Day relationship
+    const dayA = timeA.getDate();
+    const dayB = timeB.getDate();
+    let dayRelation: 'same day' | 'next day (tomorrow)' | 'previous day (yesterday)' = 'same day';
+
+    if (dayB > dayA || (dayA > 25 && dayB === 1)) {
+      dayRelation = 'next day (tomorrow)';
+    } else if (dayB < dayA || (dayB > 25 && dayA === 1)) {
+      dayRelation = 'previous day (yesterday)';
+    }
+
+    let summary = '';
+    if (direction === 'same') {
+      summary = 'Both locations share the exact same local time';
+    } else {
+      const timeStr = `${hours} hour${hours !== 1 ? 's' : ''}${mins > 0 ? ` and ${mins} min${mins !== 1 ? 's' : ''}` : ''}`;
+      summary = `${timeStr} ${direction}`;
+    }
+
+    return {
+      hoursDiff: totalHours,
+      minutesDiff: mins,
+      totalMinutes,
+      direction,
+      formattedDiff,
+      dayRelation,
+      summary,
+    };
+  } catch (error) {
+    console.error('Failed to calculate time difference', error);
+    return {
+      hoursDiff: 0,
+      minutesDiff: 0,
+      totalMinutes: 0,
+      direction: 'same',
+      formattedDiff: '0h',
+      dayRelation: 'same day',
+      summary: 'Same time',
+    };
+  }
+}
+
+export interface HourSlot {
+  hourA: number;
+  hourB: number;
+  hourAStr: string;
+  hourBStr: string;
+  statusA: 'work' | 'awake' | 'sleep';
+  statusB: 'work' | 'awake' | 'sleep';
+  isOverlap: boolean; // Both awake
+  isWorkOverlap: boolean; // Both in work hours (9-17)
+}
+
+/**
+ * Generates 24 hourly comparison slots between timezone A and timezone B
+ */
+export function getComparisonTimeline(
+  timezoneA: string,
+  timezoneB: string,
+  baseDate: Date = new Date()
+): { slots: HourSlot[]; bestMeetingWindow: string | null } {
+  const diff = getTimeDifference(timezoneA, timezoneB, baseDate);
+  const slots: HourSlot[] = [];
+  const workOverlaps: number[] = [];
+  const awakeOverlaps: number[] = [];
+
+  const getStatus = (hour: number): 'work' | 'awake' | 'sleep' => {
+    if (hour >= 9 && hour < 17) return 'work';
+    if (hour >= 7 && hour < 23) return 'awake';
+    return 'sleep';
+  };
+
+  for (let hA = 0; hA < 24; hA++) {
+    // Calculate hour in B
+    let hB = Math.round(hA + diff.hoursDiff);
+    while (hB < 0) hB += 24;
+    while (hB >= 24) hB -= 24;
+
+    const statusA = getStatus(hA);
+    const statusB = getStatus(hB);
+
+    const isWorkOverlap = statusA === 'work' && statusB === 'work';
+    const isOverlap = statusA !== 'sleep' && statusB !== 'sleep';
+
+    if (isWorkOverlap) workOverlaps.push(hA);
+    if (isOverlap) awakeOverlaps.push(hA);
+
+    slots.push({
+      hourA: hA,
+      hourB: hB,
+      hourAStr: `${hA.toString().padStart(2, '0')}:00`,
+      hourBStr: `${hB.toString().padStart(2, '0')}:00`,
+      statusA,
+      statusB,
+      isOverlap,
+      isWorkOverlap,
+    });
+  }
+
+  let bestMeetingWindow: string | null = null;
+  if (workOverlaps.length > 0) {
+    const start = workOverlaps[0];
+    const end = workOverlaps[workOverlaps.length - 1] + 1;
+    bestMeetingWindow = `${start}:00 – ${end}:00 (Business overlap)`;
+  } else if (awakeOverlaps.length > 0) {
+    const start = awakeOverlaps[0];
+    const end = awakeOverlaps[awakeOverlaps.length - 1] + 1;
+    bestMeetingWindow = `${start}:00 – ${end}:00 (Waking overlap)`;
+  }
+
+  return { slots, bestMeetingWindow };
+}
+
